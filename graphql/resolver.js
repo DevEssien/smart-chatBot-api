@@ -1,7 +1,6 @@
 require('dotenv').config()
 const bcrypt = require('bcryptjs')
 const { Configuration, OpenAIApi } = require("openai");
-const { findOne } = require('../models/user');
 
 const User = require('../models/user')
 
@@ -11,29 +10,47 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 module.exports = {
-    signup: async ({ email, password}) => {
-        try {
-            const user = await findOne({ email: email}) 
-            if (user) {
-                const error = new Error('Email already exist!');
-                error.code = 422;
-                error.message = 'Email already exist!';
-                throw error
-            }
-            const newUser = new User({
-                email: 'essienemma',
-                password: await bcrypt.hash(password, 12)
-            })
-            await newUser.save();
-            return {
-                userId: newUser._id
-            }
-        } catch(error) {
-            if (!error.code) {
-                error.code = 500
-            }
-            next(error)
+    signup: async ({ userInput}) => {
+        const { email, password } = userInput;
+        const user = await User.findOne({ email: email}) 
+        if (user) {
+            const error = new Error('Email already exist!');
+            error.code = 422;
+            error.message = 'Email already exist!';
+            throw error
         }
+        const newUser = new User({
+            email: email,
+            password: await bcrypt.hash(password, 12)
+        })
+        const savedUser = await newUser.save();
+        if (!savedUser) {
+            const error = new Error('Server side error');
+            error.code = 500;
+            error.message = 'Server side error!';
+            throw error
+        }
+        return {
+            userId: newUser._id
+        }
+    },
+
+    login: async ({ email, password}) => {
+        const user = await User.findOne({ email: email})
+        if (!user) {
+            const error = new Error('User not found!');
+            error.code = 404;
+            error.message = 'EUser not found!';
+            throw error
+        };
+        const matchedPassword = await bcrypt.compare(password, user?.password);
+        if (!matchedPassword) {
+            const error = new Error('Incorrect password!');
+            error.code = 401;
+            error.message = 'Incorrect password!';
+            throw error
+        }
+        return user
     },
     users: () => {
         try { 

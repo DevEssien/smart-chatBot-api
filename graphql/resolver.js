@@ -7,10 +7,17 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 module.exports = {
-    user: () => {
-        return {
-            name: 'Essien Emmanuel',
-            age: 89
+    
+    users: () => {
+        try { 
+           return  [
+                {
+                    name: 'Essien Emmanuel',
+                    age: 89
+                }
+            ]   
+        } catch(error) {
+            console.log('error ', error)
         }
     },
 
@@ -45,7 +52,9 @@ module.exports = {
             // const chat = messages.push(resultMessage)
             // console.log('chat ', typeof chat)
             // return chat
-            return messages
+            return {
+                messages
+            }
         } catch(error) {
             console.log("error", error)
         }

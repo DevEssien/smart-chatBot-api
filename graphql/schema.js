@@ -11,15 +11,15 @@ module.exports = buildSchema(`
         content: String!
     }
     type ResultMessage {
-        messages: [MessageStructure]
+        messages: [MessageStructure!]!
     }
 
     type RootMutation {
-        search(searchInput: String!): ResultMessage
+        search(searchInput: String!): ResultMessage!
     }
     
     type RootQuery {
-        user: User!
+        users: [User]
     }
 
     schema {

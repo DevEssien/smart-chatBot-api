@@ -1,5 +1,6 @@
 const express = require('express');
 const { graphqlHTTP } = require('express-graphql')
+const mongoose = require('mongoose')
 
 const schema = require('./graphql/schema')
 const resolver = require('./graphql/resolver')
@@ -26,6 +27,10 @@ app.use('/graphql', graphqlHTTP({
         }
     }
 }))
+
+mongoose.set('strictQuery', false);
+
+mongoose.connect('mongodb://127.0.0.1:27017/smart-chatDB', { useNewUrlParser: true})
 
 app.listen(3000, () => {
     console.log('server is spinning at port 3000')

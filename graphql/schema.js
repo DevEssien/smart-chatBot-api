@@ -6,6 +6,11 @@ module.exports = buildSchema(`
         age: Int!
     }
 
+    type AuthData {
+        token: String
+        userId: String
+    }
+
     type MessageStructure {
         role: String!
         content: String!
@@ -15,7 +20,8 @@ module.exports = buildSchema(`
     }
 
     type RootMutation {
-        search(searchInput: String!): ResultMessage!
+        signup(email: String!, password: String!): AuthData
+        search(content: String!): ResultMessage!
     }
     
     type RootQuery {

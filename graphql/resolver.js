@@ -1,5 +1,9 @@
 require('dotenv').config()
+const bcrypt = require('bcryptjs')
 const { Configuration, OpenAIApi } = require("openai");
+const { findOne } = require('../models/user');
+
+const User = require('../models/user')
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -7,7 +11,30 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 module.exports = {
-    
+    signup: async ({ email, password}) => {
+        try {
+            const user = await findOne({ email: email}) 
+            if (user) {
+                const error = new Error('Email already exist!');
+                error.code = 422;
+                error.message = 'Email already exist!';
+                throw error
+            }
+            const newUser = new User({
+                email: 'essienemma',
+                password: await bcrypt.hash(password, 12)
+            })
+            await newUser.save();
+            return {
+                userId: newUser._id
+            }
+        } catch(error) {
+            if (!error.code) {
+                error.code = 500
+            }
+            next(error)
+        }
+    },
     users: () => {
         try { 
            return  [
@@ -21,7 +48,7 @@ module.exports = {
         }
     },
 
-    search: async ({searchInput}) => {
+    search: async ({content}) => {
         try {
             const model = "gpt-3.5-turbo"
             const messages = [
@@ -32,26 +59,23 @@ module.exports = {
 
                 {
                     "role": "user",
-                    "content": 'What is the recipe to make banana muffins'
+                    "content": content
                 }
             ];
             
-            // const completion = await openai.createChatCompletion({
-            //     model,
-            //     messages
-            // });
+            const completion = await openai.createChatCompletion({
+                model,
+                messages
+            });
 
-            // if (!completion.status === 200) {
-            //     const error = new Error('An error occured');
-            //     error.code = completion.status;
-            //     error.message = completion.statusText;
-            //     throw error
-            // }
-            // const resultMessage = completion.data.choices[0].message
-            // console.log('result message ', resultMessage)
-            // const chat = messages.push(resultMessage)
-            // console.log('chat ', typeof chat)
-            // return chat
+            if (!completion.status === 200) {
+                const error = new Error('An error occured');
+                error.code = completion.status;
+                error.message = completion.statusText;
+                throw error
+            }
+            const resultMessage = completion.data.choices[0].message
+            messages.push(resultMessage)
             return {
                 messages
             }

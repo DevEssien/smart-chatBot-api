@@ -10,7 +10,20 @@ const userSchema = new Schema({
     password: {
         type: String,
         required: true
-    }
+    },
+    chat: [
+        {
+            conversationId: Schema.Types.ObjectId,
+            first_search: String,
+            conversation: [
+                {
+                    role: String,
+                    content: String
+                }
+            ],
+            conversation_length: Number
+        }
+    ]
 });
 
 module.exports = mongoose.model('User', userSchema)

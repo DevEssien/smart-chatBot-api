@@ -22,7 +22,8 @@ module.exports = {
         }
         const newUser = new User({
             email: email,
-            password: await bcrypt.hash(password, 12)
+            password: await bcrypt.hash(password, 12),
+            chat: []
         })
         const savedUser = await newUser.save();
         if (!savedUser) {
@@ -31,13 +32,15 @@ module.exports = {
             error.message = 'Server side error!';
             throw error
         }
+        // console.log(newUser._id)
         return {
-            userId: newUser._id.toString()
+            _id: newUser._id.toString()
         }
     },
 
     login: async ({ email, password}, req) => {
         const user = await User.findOne({ email: email})
+        console.log(user)
         if (!user) {
             const error = new Error('User not found!');
             error.code = 404;
@@ -77,25 +80,32 @@ module.exports = {
             }
         ];
         
-        const completion = await openai.createChatCompletion({
-            model,
-            messages
-        });
+        // const completion = await openai.createChatCompletion({
+        //     model,
+        //     messages
+        // });
 
-        if (!completion.status === 200) {
-            const error = new Error('An error occured');
-            error.code = completion.status;
-            error.message = completion.statusText;
-            throw error
+        // if (!completion.status === 200) {
+        //     const error = new Error('An error occured');
+        //     error.code = completion.status;
+        //     error.message = completion.statusText;
+        //     throw error
+        // }
+        // const resultMessage = completion.data.choices[0].message
+        // if (!resultMessage) {
+        //     const error = new Error('No Response');
+        //     error.code = 404;
+        //     error.message = completion.statusText;
+        //     throw error
+        // }
+        const resultMessage = {
+            role: "Assistant",
+            content: "There is no best footballer in the world as Neymar jr, Lionel Messi and Christiano Ronaldo is debated the world best footballers"
         }
-        const resultMessage = completion.data.choices[0].message
-        if (!resultMessage) {
-            const error = new Error('No Response');
-            error.code = 404;
-            error.message = completion.statusText;
-            throw error
-        }
-        messages.push(resultMessage)
+        messages.push(resultMessage);
+
+        // const user = await User.findById("6429d2d3e661a46d505e4704");
+        // user.
         return {
             messages
         }

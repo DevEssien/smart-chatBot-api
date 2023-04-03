@@ -32,7 +32,6 @@ module.exports = {
             error.message = 'Server side error!';
             throw error
         }
-        // console.log(newUser._id)
         return {
             _id: newUser._id.toString()
         }
@@ -40,7 +39,6 @@ module.exports = {
 
     login: async ({ email, password}, req) => {
         const user = await User.findOne({ email: email})
-        console.log(user)
         if (!user) {
             const error = new Error('User not found!');
             error.code = 404;
@@ -66,46 +64,73 @@ module.exports = {
         }
     },
 
-    search: async ({content}) => {
+    search: async ({content}, req) => {
+        req.userId = "642ad56ff00ee0e219324aa7";
         const model = "gpt-3.5-turbo"
-        const messages = [
-            {
-                "role": "system",
-                "content": 'you are a wonderful helpful assistant'
-            },
+        let messages;
+        const user = await User.findById(req.userId);
 
+        if (!user) {
+            const error = new Error('You are not signed in');
+            error.code = 404;
+            error.message = 'No user';
+            throw error
+        }
+        console.log(user)
+        if (user.chat[0]) {
+            messages = user.chat[0].conversation
+
+        } else {
+            messages = [
+                {
+                    "role": "system",
+                    "content": 'you are a wonderful helpful assistant'
+                }
+            ];
+        }
+        messages.push(
             {
                 "role": "user",
                 "content": content
             }
-        ];
+        );
         
-        // const completion = await openai.createChatCompletion({
-        //     model,
-        //     messages
-        // });
+        const completion = await openai.createChatCompletion({
+            model,
+            messages
+        });
 
-        // if (!completion.status === 200) {
-        //     const error = new Error('An error occured');
-        //     error.code = completion.status;
-        //     error.message = completion.statusText;
-        //     throw error
-        // }
-        // const resultMessage = completion.data.choices[0].message
-        // if (!resultMessage) {
-        //     const error = new Error('No Response');
-        //     error.code = 404;
-        //     error.message = completion.statusText;
-        //     throw error
-        // }
-        const resultMessage = {
-            role: "Assistant",
-            content: "There is no best footballer in the world as Neymar jr, Lionel Messi and Christiano Ronaldo is debated the world best footballers"
+        if (!completion.status === 200) {
+            const error = new Error('An error occured');
+            error.code = completion.status;
+            error.message = completion.statusText;
+            throw error
         }
+        const resultMessage = completion.data.choices[0].message
+        if (!resultMessage) {
+            const error = new Error('No Response');
+            error.code = 404;
+            error.message = completion.statusText;
+            throw error
+        }
+      
         messages.push(resultMessage);
 
-        // const user = await User.findById("6429d2d3e661a46d505e4704");
-        // user.
+        const update = {
+            first_search:  messages[1].content || '',
+            conversation: messages,
+            conversation_length: messages.length
+        }
+
+        try {
+            const updatedUser = await User.updateOne({_id: req.userId}, { chat: [update]});
+            if (!updatedUser) {
+                console.log('An error occured')
+                throw Error
+            }
+        } catch(error) {
+            console.log('error ', error)
+        }
         return {
             messages
         }

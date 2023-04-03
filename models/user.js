@@ -15,12 +15,7 @@ const userSchema = new Schema({
         {
             conversationId: Schema.Types.ObjectId,
             first_search: String,
-            conversation: [
-                {
-                    role: String,
-                    content: String
-                }
-            ],
+            conversation: [],
             conversation_length: Number
         }
     ]
